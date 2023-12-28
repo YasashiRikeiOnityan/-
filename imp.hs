@@ -42,7 +42,7 @@ bexpEqual (Leq a11 a12) (Leq a21 a22) = aexpEqual a11 a21 && aexpEqual a12 a22
 bexpEqual (Not b1) (Not b2) = bexpEqual b1 b2
 bexpEqual (And b11 b12) (And b21 b22) = bexpEqual b11 b21 && bexpEqual b21 b22
 bexpEqual (Or b11 b12) (Or b21 b22) = bexpEqual b11 b21 && bexpEqual b21 b22
-bexpEqual _ _ =False
+bexpEqual _ _ = False
 
 comEqual :: Com -> Com -> Bool
 comEqual Skip Skip = True
