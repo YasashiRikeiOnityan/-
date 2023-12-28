@@ -1,5 +1,4 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
+-- 必要なものだけインポートする
 import Prelude (Int, String, Bool, (+), (-), (*), (==), ($))
 
 -- 前準備
@@ -10,6 +9,10 @@ Fal && _ =  Fal
 
 equal :: Bool -> Bexp
 equal b = if b then Tru else Fal
+
+-- 状態（σ : Loc -> N）
+sigma :: Sigma
+sigma _ = 0
 -------------------------------------
 
 type N = Int
@@ -67,9 +70,6 @@ comEqual (Seq c11 c12) (Seq c21 c22) = comEqual c11 c21 && comEqual c12 c22
 comEqual (If b1 c11 c12) (If b2 c21 c22) = bexpEqual b1 b2 && comEqual c11 c12 && comEqual c21 c22
 comEqual (While b1 c1) (While b2 c2) = bexpEqual b1 b2 && comEqual c1 c2
 comEqual _ _ = Fal
-
-sigma :: Sigma
-sigma _ = 0
 
 evalAexp :: AEConf -> N
 evalAexp (Const n, _) = n
