@@ -8,10 +8,10 @@ data Aexp = Const N   -- n
     | Sub Aexp Aexp   -- a0 - a1
     | Mul Aexp Aexp   -- a0 * a1
 
-data Bexp = Tru      -- true
+data Bexp = Tru       -- true
     | Fal             -- false
     | Equ Aexp Aexp   -- a0 = a1
-    | Leq Aexp Aexp    -- a0 <= a1
+    | Leq Aexp Aexp   -- a0 <= a1
     | Not Bexp        -- not b
     | And Bexp Bexp   -- b0 and b1
     | Or Bexp Bexp    -- b0 or b1
