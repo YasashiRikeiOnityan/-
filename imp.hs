@@ -2,6 +2,16 @@
 
 import Prelude (Int, String, Bool, (+), (-), (*), (==), ($))
 
+-- 前準備
+------------------------------------
+(&&) :: Bexp -> Bexp -> Bexp
+Tru && x =  x
+Fal && _ =  Fal
+
+equal :: Bool -> Bexp
+equal b = if b then Tru else Fal
+-------------------------------------
+
 type N = Int
 
 type Loc = String
@@ -72,11 +82,4 @@ evalBexp :: BEConf -> Bexp
 evalBexp (Tru, _) = Tru
 evalBexp (Fal, _) = Fal
 evalBexp (Equ a1 a2, s) = equal $ evalAexp (a1, s) == evalAexp (a2, s)
-
-(&&) :: Bexp -> Bexp -> Bexp
-Tru && x =  x
-Fal && _ =  Fal
-
-equal :: Bool -> Bexp
-equal b = if b then Tru else Fal
     
