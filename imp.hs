@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
-import Prelude (Int, String, (+), (-), (*))
+import Prelude (Int, String, Bool, (+), (-), (*), (==), ($))
 
 type N = Int
 
@@ -33,8 +33,8 @@ type AEConf = (Aexp, Sigma)
 type BEConf = (Bexp, Sigma)
 
 aexpEqual :: Aexp -> Aexp -> Bexp
-aexpEqual (Const n1) (Const n2) = n1 == n2
-aexpEqual (Var v1) (Var v2) = v1 == v2
+aexpEqual (Const n1) (Const n2) = equal (n1 == n2)
+aexpEqual (Var v1) (Var v2) = equal (v1 == v2)
 aexpEqual (Add a11 a12) (Add a21 a22) = aexpEqual a11 a21 && aexpEqual a12 a22
 aexpEqual (Sub a11 a12) (Sub a21 a22) = aexpEqual a11 a21 && aexpEqual a12 a22
 aexpEqual (Mul a11 a12) (Mul a21 a22) = aexpEqual a11 a21 && aexpEqual a12 a22
@@ -71,22 +71,12 @@ evalAexp (Sub a1 a2, s) = evalAexp (a1, s) - evalAexp (a2, s)
 evalBexp :: BEConf -> Bexp
 evalBexp (Tru, _) = Tru
 evalBexp (Fal, _) = Fal
-evalBexp (Equ a1 a2, s) = evalAexp (a1, s) == evalAexp (a2, s)
+evalBexp (Equ a1 a2, s) = equal $ evalAexp (a1, s) == evalAexp (a2, s)
 
 (&&) :: Bexp -> Bexp -> Bexp
 Tru && x =  x
 Fal && _ =  Fal
 
-not :: Bexp -> Bexp
-not Tru = Fal
-not Fal = Tru
-
-class Eq a where
-    (==), (/=) :: a -> a -> Bexp
-    {-# HLINT ignore "Use /=" #-}
-    {-# HLINT ignore "Use ==" #-}
-    x /= y = not (x == y)
-    x == y = not (x /= y)
-
-instance Eq Aexp where
+equal :: Bool -> Bexp
+equal b = if b then Tru else Fal
     
