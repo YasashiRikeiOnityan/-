@@ -1,5 +1,5 @@
 -- 必要なものだけインポートする
-import Prelude (Int, String, Bool, (+), (-), (*), (==), ($))
+import Prelude (Int, String, Bool, (+), (-), (*), (==), ($), Show)
 
 -- 前準備
 ------------------------------------
@@ -24,6 +24,7 @@ data Aexp = Const N   -- n
     | Add Aexp Aexp   -- a0 + a1
     | Sub Aexp Aexp   -- a0 - a1
     | Mul Aexp Aexp   -- a0 * a1
+    deriving Show
 
 data Bexp = Tru       -- true
     | Fal             -- false
@@ -32,18 +33,22 @@ data Bexp = Tru       -- true
     | Not Bexp        -- not b
     | And Bexp Bexp   -- b0 and b1
     | Or Bexp Bexp    -- b0 or b1
+    deriving Show
 
 data Com = Skip       -- skip
     | Assign Loc Aexp -- X := a
     | Seq Com Com     -- c0;c1
     | If Bexp Com Com -- if b then c0 else c1
     | While Bexp Com  -- while b c
+    deriving Show
 
 type Sigma = Loc -> N
 
 type AEConf = (Aexp, Sigma)
 
 type BEConf = (Bexp, Sigma)
+
+type CConf = (Com, Sigma)
 
 aexpEqual :: Aexp -> Aexp -> Bexp
 aexpEqual (Const n1) (Const n2) = equal (n1 == n2)
