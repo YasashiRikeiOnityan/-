@@ -1,20 +1,8 @@
--- 必要なものだけインポートする
-import Prelude (Int, String, Bool, (+), (-), (*), (==), ($), Show)
+-- 必要なものだけインポートする (自分で定義できそうなものはインポートしない方針で)
+import Prelude (Int, String, Bool, Show, (+), (-), (*), (==), (<=), ($))
 
--- 前準備
+-- 型定義
 ------------------------------------
-(&&) :: Bexp -> Bexp -> Bexp
-Tru && x =  x
-Fal && _ =  Fal
-
-equal :: Bool -> Bexp
-equal b = if b then Tru else Fal
-
--- 状態（σ : Loc -> N）
-sigma :: Sigma
-sigma _ = 0
--------------------------------------
-
 type N = Int
 
 type Loc = String
@@ -42,17 +30,61 @@ data Com = Skip       -- skip
     | While Bexp Com  -- while b c
     deriving Show
 
+type State = (Loc, N)
+
+type States = [State]
+
+-- 状態（σ : Loc -> N）
 type Sigma = Loc -> N
 
-type AEConf = (Aexp, Sigma)
+type AEConf = (Aexp, States)
 
-type BEConf = (Bexp, Sigma)
+type BEConf = (Bexp, States)
 
-type CConf = (Com, Sigma)
+type CConf = (Com, States)
+------------------------------------
 
+-- 前準備
+------------------------------------
+(&&) :: Bexp -> Bexp -> Bexp
+Tru && x =  x
+Fal && _ =  Fal
+
+(||) :: Bexp -> Bexp -> Bexp
+Tru || _ = Tru
+Fal || x = x
+
+bool2bexp :: Bool -> Bexp
+bool2bexp b = if b then Tru else Fal
+
+not :: Bexp -> Bexp
+not Tru = Fal
+not Fal = Tru
+
+myIf :: Bexp -> a -> a -> a
+myIf Tru f g = f
+myIf Fal f g = g
+
+fst :: (a, b) -> a
+fst (x, _) = x
+
+snd :: (a, b) -> b
+snd (_, y) = y
+
+map :: (a -> b) -> [a] -> [b]
+{-# NOINLINE [0] map #-}
+map _ [] = []
+map f (x : xs) = f x : map f xs
+
+states :: States
+states = [("X", 0), ("Y", 0), ("Z", 0)]
+-------------------------------------
+
+-- 問題2.1 同一性判定
+-------------------------------------
 aexpEqual :: Aexp -> Aexp -> Bexp
-aexpEqual (Const n1) (Const n2) = equal (n1 == n2)
-aexpEqual (Var v1) (Var v2) = equal (v1 == v2)
+aexpEqual (Const n1) (Const n2) = bool2bexp (n1 == n2)
+aexpEqual (Var v1) (Var v2) = bool2bexp (v1 == v2)
 aexpEqual (Add a11 a12) (Add a21 a22) = aexpEqual a11 a21 && aexpEqual a12 a22
 aexpEqual (Sub a11 a12) (Sub a21 a22) = aexpEqual a11 a21 && aexpEqual a12 a22
 aexpEqual (Mul a11 a12) (Mul a21 a22) = aexpEqual a11 a21 && aexpEqual a12 a22
@@ -75,7 +107,10 @@ comEqual (Seq c11 c12) (Seq c21 c22) = comEqual c11 c21 && comEqual c12 c22
 comEqual (If b1 c11 c12) (If b2 c21 c22) = bexpEqual b1 b2 && comEqual c11 c12 && comEqual c21 c22
 comEqual (While b1 c1) (While b2 c2) = bexpEqual b1 b2 && comEqual c1 c2
 comEqual _ _ = Fal
+-------------------------------------
 
+-- 問題2.2, 2.6 評価規則
+-------------------------------------
 evalAexp :: AEConf -> N
 evalAexp (Const n, _) = n
 evalAexp (Var "Init", _) = 0
@@ -86,5 +121,20 @@ evalAexp (Sub a1 a2, s) = evalAexp (a1, s) - evalAexp (a2, s)
 evalBexp :: BEConf -> Bexp
 evalBexp (Tru, _) = Tru
 evalBexp (Fal, _) = Fal
-evalBexp (Equ a1 a2, s) = equal $ evalAexp (a1, s) == evalAexp (a2, s)
-    
+evalBexp (Equ a1 a2, s) = bool2bexp $ evalAexp (a1, s) == evalAexp (a2, s)
+evalBexp (Leq a1 a2, s) = bool2bexp $ evalAexp (a1, s) <= evalAexp (a2, s)
+evalBexp (Not b, s) = not $ evalBexp (b, s)
+evalBexp (And b1 b2, s) = evalBexp (b1, s) && evalBexp (b2, s)
+evalBexp (Or b1 b2, s) = evalBexp (b1, s) || evalBexp (b2, s)
+
+evalCom :: CConf -> States
+evalCom (Skip, s) = s
+evalCom (Assign l a, s) = assign (evalAexp (a, s)) l s
+evalCom (Seq c1 c2, s) = evalCom (c2, evalCom (c1, s))
+evalCom (If b c1 c2, s) = myIf b (evalCom (c1, s)) (evalCom (c2, s))
+evalCom (While b c, s) = myIf b (evalCom (While b c, evalCom (c, s))) s
+
+-- σ[m/X](Y)
+assign :: N -> Loc -> States -> States
+assign m loc = map (\x -> if fst x == loc then (loc, m) else x)
+-------------------------------------
